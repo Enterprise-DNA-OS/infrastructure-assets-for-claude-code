@@ -7,18 +7,19 @@ That layer used to be the whole product, because talking to a database was hard.
 ## What you gain
 
 - **Better answers.** A dashboard shows what the vendor decided to chart. Here you ask your own question, in your own words, and get it answered against your own data.
-- **No seats.** Everyone who needs to look can look. The bill does not grow with headcount.
+- **No licence that grows with your network.** Every engineer, planner and finance analyst who needs to look can look, and adding a new subdivision's pipes costs nothing.
 - **Your data in your Postgres.** Plain tables. Back them up, query them from anything, leave any time. There is no export step because there is nothing to leave.
 - **A process that matches you.** When your way of working changes, you add a command. You do not wait for a feature request to clear.
 
 ## What you give up
 
-- **A visual board.** Stages are a table you ask about, not cards you drag.
-- **A phone app.** It runs where Claude Code runs.
+- **A map.** There is no map view. The register keeps area and location, and your GIS can read the database directly. A map is something Enterprise DNA builds into a customised version.
+- **A field app.** Inspectors record grades through a person at a desk, or a form Enterprise DNA builds. It runs where Claude Code runs.
+- **Treatment modelling.** The forecast renews an asset at its intervention grade. Several treatments per asset (reseal, then rehabilitate) and budget scenarios are added with `/customise`.
 - **A vendor help desk.** This is open source. Enterprise DNA supports the installed version for businesses that want someone to call.
 
 ## Who this fits
 
-Small teams who already use Claude Code, or who would rather learn to ask than learn another interface. If your team needs a screen to look at all day, keep Assetic. If you need the answers more than the screens, this is cheaper, faster and yours.
+Small teams who already use Claude Code, or who would rather learn to ask than learn another interface. If your team needs a map to look at all day, keep Assetic or have us build one. If you need the answers more than the screens, this is cheaper, faster and yours.
 
 Installed and run for you: https://enterprisedna.co/omni/instead-of/assetic

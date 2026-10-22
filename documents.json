@@ -1,11 +1,68 @@
 [
   {
-    "name": "example",
-    "title": "TODO(author): the first document this industry must produce",
-    "for_each": "select gen_random_uuid() as id, 'Example' as name",
+    "name": "infrastructure-report",
+    "title": "Report on infrastructure assets",
+    "for_each": "select 'organisation' as id, setting('organisation', 'Your organisation') as name",
     "file": "name",
     "sections": [
-      { "title": "Details", "sql": "select 'replace me' as item, $1::text as record_id" }
+      {
+        "title": "Assets by class",
+        "note": "Gross replacement cost, written down value and annual depreciation from the register; backlog is the cost to renew assets below a satisfactory condition.",
+        "sql": "select r.class_code as class, r.class as name, sum(r.grc_cents)::bigint as gross_replacement_cents, sum(r.carrying_cents)::bigint as written_down_value_cents, sum(r.annual_depreciation_cents)::bigint as annual_depreciation_cents, coalesce(sum(r.grc_cents) filter (where r.grade >= r.intervention_grade), 0)::bigint as backlog_cents, max(c.required_maintenance_cents) as required_maintenance_cents, max(r.currency) as currency from asset_register r join asset_classes c on c.id = r.class_id where $1 = 'organisation' group by r.class_code, r.class order by r.class_code"
+      },
+      {
+        "title": "Condition, as a share of gross replacement cost",
+        "note": "Grade 1 excellent to grade 5 very poor.",
+        "sql": "select class_code as class, grade_1_percent, grade_2_percent, grade_3_percent, grade_4_percent, grade_5_percent, not_graded_percent from condition_profile where $1 = 'organisation' order by class_code"
+      },
+      {
+        "title": "Ratios",
+        "note": "Renewals and the essential services ratio against depreciation; maintenance against required maintenance; backlog against written down value. Past years actual, later years budget.",
+        "sql": "select fy_label(financial_year) as year, basis, renewals_ratio_percent, essential_services_percent, maintenance_ratio_percent, backlog_ratio_percent from ratios where $1 = 'organisation'"
+      }
+    ]
+  },
+  {
+    "name": "class-summary",
+    "title": "Asset class summary",
+    "for_each": "select c.id::text as id, c.code || ' ' || c.name as name from asset_classes c where exists (select 1 from assets a where a.class_id = c.id and a.status = 'active') order by c.code",
+    "file": "name",
+    "sections": [
+      { "title": "The class", "sql": "select c.code, c.name, c.category, c.unit, c.default_useful_life_years as useful_life_years, c.inspection_months, c.revaluation_years, c.last_revalued_on, (select sum(grc_cents) from asset_register r where r.class_id = c.id)::bigint as grc_cents, setting('currency', 'NZD') as currency from asset_classes c where c.id::text = $1" },
+      { "title": "Assets", "sql": "select code, name, area, quantity, unit, grc_cents, age_years, grade, remaining_life_years, criticality, currency from asset_register where class_id::text = $1 order by code" },
+      { "title": "Renewals in the next 10 years", "sql": "select fy_label(f.financial_year) as year, f.code, f.name, f.grade, f.cost_cents, f.currency from renewal_forecast f join asset_classes c on c.code = f.class_code where c.id::text = $1 and f.financial_year < fy_of(current_date) + 10 order by f.financial_year" },
+      { "title": "Works programme", "sql": "select number, name, kind, fy_label(financial_year) as year, budget_cents, actual_cents, status, currency from works_list where class_id::text = $1 order by financial_year, number" }
+    ]
+  },
+  {
+    "name": "renewal-programme",
+    "title": "Ten-year renewal programme",
+    "for_each": "select 'organisation' as id, setting('organisation', 'Your organisation') as name",
+    "file": "name",
+    "sections": [
+      { "title": "By year and class", "note": "Forecast from each asset's condition and useful life. Assets already below satisfactory fall in the first year.", "sql": "select fy_label(financial_year) as year, class_code as class, count(*) as renewals, sum(cost_cents)::bigint as cost_cents, max(currency) as currency from renewal_forecast where $1 = 'organisation' and financial_year < fy_of(current_date) + 10 group by financial_year, class_code order by financial_year, class_code" },
+      { "title": "Against the budget", "sql": "select fy_label(financial_year) as year, forecast_cents, budget_cents, gap_cents, cumulative_gap_cents, currency from funding_gap where $1 = 'organisation' and financial_year < fy_of(current_date) + 10 order by financial_year" }
+    ]
+  },
+  {
+    "name": "revaluation-schedule",
+    "title": "Revaluation schedule",
+    "for_each": "select c.id::text as id, c.code || ' ' || c.name as name from asset_classes c join revaluations_due d on d.code = c.code where d.assets > 0 and d.due_on < current_date + 365 order by d.due_on",
+    "file": "name",
+    "sections": [
+      { "title": "For the valuer", "note": "Every asset in the class with its measure, unit rate, dates, life and condition. Depreciated replacement cost, straight line.", "sql": "select code, name, area, quantity, unit, unit_rate_cents, grc_cents, installed_on, renewed_on, useful_life_years, grade, accumulated_depreciation_cents, carrying_cents, currency from asset_register where class_id::text = $1 order by code" },
+      { "title": "Previous valuations", "sql": "select valued_on, valuer, method, index_pct, gross_replacement_cents, accumulated_depreciation_cents, annual_depreciation_cents, setting('currency', 'NZD') as currency from valuations where class_id::text = $1 order by valued_on desc" }
+    ]
+  },
+  {
+    "name": "defect-instruction",
+    "title": "Defect work instruction",
+    "for_each": "select id::text as id, number || ' ' || asset as name from defects_open where status = 'open' order by respond_by",
+    "file": "name",
+    "sections": [
+      { "title": "The defect", "sql": "select d.number, d.risk, d.reported_on, d.respond_by, d.description from defects_open d where d.id::text = $1" },
+      { "title": "Where", "sql": "select a.code, a.name, a.location, a.area, c.name as class, a.criticality from defects d join assets a on a.id = d.asset_id join asset_classes c on c.id = a.class_id where d.id::text = $1" },
+      { "title": "Recent inspections of this asset", "sql": "select i.inspected_on, i.grade, i.inspector, i.notes from inspections i join defects d on d.asset_id = i.asset_id where d.id::text = $1 order by i.inspected_on desc limit 3" }
     ]
   }
 ]

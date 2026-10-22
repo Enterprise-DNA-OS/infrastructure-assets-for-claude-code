@@ -1,0 +1,6 @@
+Asset ID,Asset Name,Asset Class,Suburb,Network Measure,Unit,Unit Rate,Useful Life,Install Date,Condition,Condition Date,Criticality
+WM-10021,Kowhai Street water main,Water supply mains,Waimere town,420,m,640,80,14/03/1971,4,02/05/2025,3
+WM-10022,Rata Street water main,Water supply mains,Waimere town,310,m,640,80,1984,2,02/05/2025,2
+SW-20410,Beach Road stormwater,SWM,Te Kupu,260,m,720,100,2001-09-01,2,2024-11-20,3
+KC-30007,Main Street kerb and channel,Kerb and channel,Waimere town,2400,m,145,60,1979,3,2025-01-15,4
+WM-10023,Totara Street water main,Water supply mains,Waimere town,180,m,640,80,1968,7,02/05/2025,2

@@ -1,14 +1,24 @@
 [
-  {
-    "name": "week",
-    "title": "This week",
-    "subtitle": "Infrastructure Assets for Claude Code: what needs attention, rendered by npm run view",
-    "sections": [
-      {
-        "title": "Needs attention",
-        "note": "TODO(author): point this at the industry's attention view (overdue, stuck, quiet).",
-        "sql": "select 'replace me' as item, 'TODO(author)' as why"
-      }
-    ]
-  }
+  { "name": "week", "title": "The asset week", "sections": [
+      { "title": "In five numbers", "sql": "select item, value from this_week" },
+      { "title": "Needs a person", "note": "Breached first, then overdue, due soon, benchmarks and checks. Each line cites its source.", "sql": "select level, what, record, issue, source from attention order by case level when 'breached' then 0 when 'overdue' then 1 when 'due soon' then 2 when 'benchmark' then 3 else 4 end, what" }
+  ] },
+  { "name": "renewals", "title": "Renewals and the funding gap", "sections": [
+      { "title": "Forecast renewals against the renewal budget, 30 years", "note": "Assets already below satisfactory fall in this year: that is the backlog.", "sql": "select fy_label(financial_year) as year, forecast_cents, budget_cents, gap_cents, cumulative_gap_cents, currency from funding_gap order by financial_year" },
+      { "title": "Assets due for renewal in the next five years", "sql": "select fy_label(financial_year) as year, code, name, class, area, grade, criticality, cost_cents, currency from renewal_forecast where financial_year < fy_of(current_date) + 5 order by financial_year, cost_cents desc" }
+  ] },
+  { "name": "condition", "title": "Condition", "sections": [
+      { "title": "Share of replacement cost by condition grade", "sql": "select class_code as class, class as name, assets, grc_cents, grade_1_percent, grade_2_percent, grade_3_percent, grade_4_percent, grade_5_percent, not_graded_percent, currency from condition_profile order by class_code" },
+      { "title": "Below satisfactory", "sql": "select code, name, class, area, grade, condition, criticality, cost_to_satisfactory_cents, planned_work, currency from backlog order by criticality desc, cost_to_satisfactory_cents desc" },
+      { "title": "Wearing out faster than their age says", "sql": "select code, name, class, age_years, useful_life_years, grade, condition from asset_register where wearing_fast order by consumed - age_consumed desc" }
+  ] },
+  { "name": "finance", "title": "Ratios, depreciation and revaluation", "sections": [
+      { "title": "Sector ratios", "note": "Past years use actual spend; this year and later use the budget.", "sql": "select fy_label(financial_year) as year, basis, renewals_ratio_percent, essential_services_percent, maintenance_ratio_percent, backlog_ratio_percent from ratios" },
+      { "title": "Depreciation by class", "sql": "select class_code as class, class as name, sum(grc_cents)::bigint as grc_cents, sum(accumulated_depreciation_cents)::bigint as accumulated_depreciation_cents, sum(carrying_cents)::bigint as carrying_cents, sum(annual_depreciation_cents)::bigint as annual_depreciation_cents, max(currency) as currency from asset_register group by class_code, class order by class_code" },
+      { "title": "Revaluations", "sql": "select code, name, revaluation_years, last_revalued_on, due_on from revaluations_due order by due_on" }
+  ] },
+  { "name": "field", "title": "Inspections and defects", "sections": [
+      { "title": "Inspections due in the next 60 days", "sql": "select code, name, class, area, criticality, inspected_on, grade, inspection_due_on, days_overdue from inspections_due where inspection_due_on < current_date + 60 order by criticality desc, inspection_due_on" },
+      { "title": "Open defects", "sql": "select number, asset, asset_name, area, risk, status, reported_on, respond_by, description from defects_open order by case risk when 'extreme' then 0 when 'high' then 1 when 'medium' then 2 else 3 end, reported_on" }
+  ] }
 ]
